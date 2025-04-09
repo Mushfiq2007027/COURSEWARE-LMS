@@ -36,15 +36,14 @@ function AuthPage() {
 		);
 	}
 
-	 function checkIfSignUpFormIsValid() {
-			return (
-				signUpFormData &&
-				signUpFormData.userName !== "" &&
-				signUpFormData.userEmail !== "" &&
-				signUpFormData.password !== ""
-			);
-		}
-
+	function checkIfSignUpFormIsValid() {
+		return (
+			signUpFormData &&
+			signUpFormData.userName !== "" &&
+			signUpFormData.userEmail !== "" &&
+			signUpFormData.password !== ""
+		);
+	}
 
 	console.log(signInFormData);
 	return (

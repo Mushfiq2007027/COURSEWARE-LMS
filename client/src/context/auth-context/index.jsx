@@ -83,7 +83,7 @@ export default function AuthProvider({ children }) {
 	}, []);
 
 	//console.log(auth, "gf");
-	console.log(auth);
+	//console.log(auth);
 
 	return (
 		<AuthContext.Provider

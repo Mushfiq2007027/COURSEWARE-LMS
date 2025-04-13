@@ -157,6 +157,7 @@ export const courseLandingInitialFormData = {
 	description: "",
 	outcomes: "",
 	welcomeMessage: "",
+	image: "",
 };
 
 export const courseCurriculumInitialFormData = [
@@ -166,5 +167,4 @@ export const courseCurriculumInitialFormData = [
 		freePreview: false,
 		public_id: "",
 	},
-	
 ];

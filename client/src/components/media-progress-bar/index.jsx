@@ -32,7 +32,7 @@ function MediaProgressbar({ isMediaUploading, progress }) {
 			>
 				{progress >= 100 && isMediaUploading && (
 					<Motion.div
-						className="absolute top-0 left-0 right-0 bottom-0 bg-green-400 opacity-50"
+						className="absolute top-0 left-0 right-0 bottom-0 bg-green-200 opacity-50"
 						animate={{
 							x: ["0%", "100%", "0%"],
 						}}

@@ -161,7 +161,7 @@ function CourseCurriculum() {
 						videoUrl: item?.url,
 						public_id: item?.public_id,
 						title: `Lecture ${
-							cpyCourseCurriculumFormdata.length + (index+1)
+							cpyCourseCurriculumFormdata.length + (index + 1)
 						}`,
 						freePreview: false,
 					})),
@@ -172,6 +172,22 @@ function CourseCurriculum() {
 			}
 		} catch (e) {
 			console.log(e);
+		}
+	}
+
+	async function handleDeleteLecture(currentIndex) {
+		let cpyCourseCurriculumFormData = [...courseCurriculumFormData];
+		const getCurrentSelectedVideoPublicId =
+			cpyCourseCurriculumFormData[currentIndex].public_id;
+
+		const response = await mediaDeleteService(getCurrentSelectedVideoPublicId);
+
+		if (response?.success) {
+			cpyCourseCurriculumFormData = cpyCourseCurriculumFormData.filter(
+				(_, index) => index !== currentIndex
+			);
+
+			setCourseCurriculumFormData(cpyCourseCurriculumFormData);
 		}
 	}
 
@@ -251,7 +267,12 @@ function CourseCurriculum() {
 										<Button onClick={() => handleReplaceVideo(index)}>
 											Replace Video
 										</Button>
-										<Button className="bg-red-900">Delete Lecture</Button>
+										<Button
+											onClick={() => handleDeleteLecture(index)}
+											className="bg-red-900"
+										>
+											Delete Lecture
+										</Button>
 									</div>
 								) : (
 									<Input

@@ -168,3 +168,16 @@ export const courseCurriculumInitialFormData = [
 		public_id: "",
 	},
 ];
+
+export const sortOptions = [
+	{ id: "courseNumber-lowtohigh", label: "Course No: Ascending" },
+	{ id: "courseNumber-hightolow", label: "Course No: Descending" },
+	{ id: "credit-lowtohigh", label: "Credit: Low to High" },
+	{ id: "credit-hightolow", label: "Credit: High to Low" },
+];
+
+export const filterOptions = {
+	category: courseCategories,
+	type: courseTypes,
+	yearSemester: yearSemesters,
+};

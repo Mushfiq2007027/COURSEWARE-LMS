@@ -26,9 +26,10 @@ function StudentViewCommonHeader() {
 					<Button
 						variant="ghost"
 						onClick={() => {
-							location.pathname.includes("/courses")
-								? null
-								: navigate("/courses");
+							//</div>location.pathname.includes("/courses")
+							//</div>? null
+							//:
+							navigate("/courses");
 						}}
 						className="text-[14px] md:text-[16px] font-medium"
 					>

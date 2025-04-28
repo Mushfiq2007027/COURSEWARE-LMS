@@ -14,24 +14,95 @@ import { ArrowUpDownIcon } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { StudentContext } from "@/context/student-context";
 import { fetchStudentViewCourseListService } from "@/services";
+import { useSearchParams } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function createSearchParamsHelper(filterParams) {
+	const queryParams = [];
+
+	for (const [key, value] of Object.entries(filterParams)) {
+		if (Array.isArray(value) && value.length > 0) {
+			const paramValue = value.join(",");
+
+			queryParams.push(`${key}=${encodeURIComponent(paramValue)}`);
+		}
+	}
+
+	return queryParams.join("&");
+}
 
 function StudentViewCoursesPage() {
-	const [sort, setSort] = useState("");
+	const [sort, setSort] = useState("courseNumber-lowtohigh");
+	const [filters, setFilters] = useState({});
+	const [searchParams, setSearchParams] = useSearchParams();
 	const {
 		studentViewCoursesList,
 		setStudentViewCoursesList,
-		//loadingState,
-		//setLoadingState,
+		loadingState,
+		setLoadingState,
 	} = useContext(StudentContext);
 
-	async function fetchAllStudentViewCourses() {
-		const response = await fetchStudentViewCourseListService();
-		if (response?.success) setStudentViewCoursesList(response?.data);
+	function handleFilterOnChange(getSectionId, getCurrentOption) {
+		let cpyFilters = { ...filters };
+		const indexOfCurrentSection = Object.keys(cpyFilters).indexOf(getSectionId);
+
+		console.log(indexOfCurrentSection, getSectionId);
+		if (indexOfCurrentSection === -1) {
+			cpyFilters = {
+				...cpyFilters,
+				[getSectionId]: [getCurrentOption.id],
+			};
+
+			console.log(cpyFilters);
+		} else {
+			const indexOfCurrentOption = cpyFilters[getSectionId].indexOf(
+				getCurrentOption.id
+			);
+
+			if (indexOfCurrentOption === -1)
+				cpyFilters[getSectionId].push(getCurrentOption.id);
+			else cpyFilters[getSectionId].splice(indexOfCurrentOption, 1);
+		}
+
+		setFilters(cpyFilters);
+		sessionStorage.setItem("filters", JSON.stringify(cpyFilters));
+	}
+
+	async function fetchAllStudentViewCourses(filters, sort) {
+		const query = new URLSearchParams({
+			...filters,
+			sortBy: sort,
+		});
+		const response = await fetchStudentViewCourseListService(query);
+		if (response?.success) {
+			setStudentViewCoursesList(response?.data);
+			setLoadingState(false);
+		}
 	}
 
 	useEffect(() => {
-		fetchAllStudentViewCourses();
+		const buildQueryStringForFilters = createSearchParamsHelper(filters);
+		setSearchParams(new URLSearchParams(buildQueryStringForFilters));
+	}, [filters]);
+
+	useEffect(() => {
+		setSort("courseNumber-lowtohigh");
+		setFilters(JSON.parse(sessionStorage.getItem("filters")) || {});
 	}, []);
+
+	useEffect(() => {
+		if (filters !== null && sort !== null)
+			fetchAllStudentViewCourses(filters, sort);
+	}, [filters, sort]);
+
+	useEffect(() => {
+		return () => {
+			sessionStorage.removeItem("filters");
+		};
+	}, []);
+
+	console.log(loadingState, "loadingState");
+
 	return (
 		<div className="w-full p-4">
 			<h1 className="text-3xl font-bold mb-4">All Courses</h1>
@@ -45,10 +116,15 @@ function StudentViewCoursesPage() {
 									{filterOptions[keyItem].map((option) => (
 										<Label className="flex font-medium items-center gap-3 py-3">
 											<Checkbox
-												checked={false}
-												//onCheckedChange={() =>
-												//handleFilterOnChange(keyItem, option.id)
-												//}
+												checked={
+													filters &&
+													Object.keys(filters).length > 0 &&
+													filters[keyItem] &&
+													filters[keyItem].indexOf(option.id) > -1
+												}
+												onCheckedChange={() =>
+													handleFilterOnChange(keyItem, option)
+												}
 											/>
 											{option.label}
 										</Label>
@@ -73,7 +149,7 @@ function StudentViewCoursesPage() {
 							</DropdownMenuTrigger>
 							<DropdownMenuContent
 								align="end"
-								className="w-[180px] border-2 border-black-500 "
+								className="w-[180px]" // border-2 border-black-500 "
 							>
 								<DropdownMenuRadioGroup
 									value={sort}
@@ -90,7 +166,7 @@ function StudentViewCoursesPage() {
 								</DropdownMenuRadioGroup>
 							</DropdownMenuContent>
 						</DropdownMenu>
-						<span className="text-sm text-black font-bold">10 Results</span>
+						<span className="text-sm text-black font-bold">{studentViewCoursesList.length} Results</span>
 					</div>
 					<div>
 						{studentViewCoursesList && studentViewCoursesList.length > 0 ? (
@@ -136,6 +212,8 @@ function StudentViewCoursesPage() {
 									</Card>
 								))}
 							</div>
+						) : loadingState ? (
+							<Skeleton />
 						) : (
 							<h1 className="font-extrabold text-4xl">No Courses Found</h1>
 						)}

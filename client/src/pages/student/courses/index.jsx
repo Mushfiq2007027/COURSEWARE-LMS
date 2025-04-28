@@ -14,7 +14,7 @@ import { ArrowUpDownIcon } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { StudentContext } from "@/context/student-context";
 import { fetchStudentViewCourseListService } from "@/services";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function createSearchParamsHelper(filterParams) {
@@ -41,6 +41,7 @@ function StudentViewCoursesPage() {
 		loadingState,
 		setLoadingState,
 	} = useContext(StudentContext);
+	const navigate = useNavigate();
 
 	function handleFilterOnChange(getSectionId, getCurrentOption) {
 		let cpyFilters = { ...filters };
@@ -166,14 +167,16 @@ function StudentViewCoursesPage() {
 								</DropdownMenuRadioGroup>
 							</DropdownMenuContent>
 						</DropdownMenu>
-						<span className="text-sm text-black font-bold">{studentViewCoursesList.length} Results</span>
+						<span className="text-sm text-black font-bold">
+							{studentViewCoursesList.length} Results
+						</span>
 					</div>
 					<div>
 						{studentViewCoursesList && studentViewCoursesList.length > 0 ? (
 							<div className="space-y-3">
 								{studentViewCoursesList.map((courseItem) => (
 									<Card
-										//onClick={() => handleCourseNavigate(courseItem?._id)}
+										onClick={() => navigate(`/course/details/${courseItem?._id}`)}
 										className="cursor-pointer"
 										key={courseItem?._id}
 									>

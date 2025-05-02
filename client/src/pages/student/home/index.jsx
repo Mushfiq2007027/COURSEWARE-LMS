@@ -3,15 +3,50 @@ import banner from "../../../../public/banner-img.webp";
 import { Button } from "@/components/ui/button";
 import { useContext, useEffect } from "react";
 import { StudentContext } from "@/context/student-context";
-import { fetchStudentViewCourseListService } from "@/services";
+import {
+	checkCoursePurchaseInfoService,
+	fetchStudentViewCourseListService,
+} from "@/services";
+import { AuthContext } from "@/context/auth-context";
+import { useNavigate } from "react-router-dom";
 
 function StudentHomepage() {
+	const { auth } = useContext(AuthContext);
+	const navigate = useNavigate();
+
 	const { studentViewCoursesList, setStudentViewCoursesList } =
 		useContext(StudentContext);
+
+	function handleNavigateToCoursesPage(getCurrentId) {
+		console.log(getCurrentId);
+		sessionStorage.removeItem("filters");
+		const currentFilter = {
+			yearSemester: [getCurrentId],
+		};
+
+		sessionStorage.setItem("filters", JSON.stringify(currentFilter));
+
+		navigate("/courses");
+	}
 
 	async function fetchAllStudentViewCourses() {
 		const response = await fetchStudentViewCourseListService();
 		if (response?.success) setStudentViewCoursesList(response?.data);
+	}
+
+	async function handleCourseNavigate(getCurrentCourseId) {
+		const response = await checkCoursePurchaseInfoService(
+			getCurrentCourseId,
+			auth?.user?._id
+		);
+
+		if (response?.success) {
+			if (response?.data) {
+				navigate(`/course-progress/${getCurrentCourseId}`);
+			} else {
+				navigate(`/course/details/${getCurrentCourseId}`);
+			}
+		}
 	}
 
 	useEffect(() => {
@@ -47,7 +82,7 @@ function StudentHomepage() {
 							className="justify-start"
 							variant="outline"
 							key={yearSemesterItem.id}
-							//onClick={() => handleNavigateToCoursesPage(categoryItem.id)}
+							onClick={() => handleNavigateToCoursesPage(yearSemesterItem.id)}
 						>
 							{yearSemesterItem.label}
 						</Button>
@@ -60,7 +95,7 @@ function StudentHomepage() {
 					{studentViewCoursesList && studentViewCoursesList.length > 0 ? (
 						studentViewCoursesList.map((courseItem) => (
 							<div
-								//onClick={() => handleCourseNavigate(courseItem?._id)}
+								onClick={() => handleCourseNavigate(courseItem?._id)}
 								className="border rounded-lg overflow-hidden shadow cursor-pointer"
 							>
 								<img

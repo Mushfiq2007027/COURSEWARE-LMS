@@ -1,11 +1,15 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { StudentContext } from "@/context/student-context";
-import { fetchStudentViewCourseDetailsService } from "@/services";
+import {
+	checkCoursePurchaseInfoService,
+	createPaymentService,
+	fetchStudentViewCourseDetailsService,
+} from "@/services";
 import { Button } from "@/components/ui/button";
 import { Calendar, CheckCircle, Lock, PlayCircle } from "lucide-react";
 
 import { useContext, useEffect, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { yearSemesters } from "@/config";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -17,6 +21,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import VideoPlayer from "@/components/video-player";
+import { AuthContext } from "@/context/auth-context";
 
 function StudentViewCourseDetailsPage() {
 	const {
@@ -28,14 +33,34 @@ function StudentViewCourseDetailsPage() {
 		setLoadingState,
 	} = useContext(StudentContext);
 
+	const { auth } = useContext(AuthContext);
+	//the following is for navigating. Must import  useNavigate from react-router-dom
+	const navigate = useNavigate();
+
 	const [displayCurrentVideoFreePreview, setDisplayCurrentVideoFreePreview] =
 		useState(null);
 	const [showFreePreviewDialog, setShowFreePreviewDialog] = useState(false);
+
+	const [approvalUrl, setApprovalUrl] = useState("");
 
 	const { id } = useParams();
 	const location = useLocation();
 
 	async function fetchStudentViewCourseDetails() {
+		const checkCoursePurchaseInfoResponse =
+			await checkCoursePurchaseInfoService(
+				currentCourseDetailsId,
+				auth?.user._id
+			);
+
+		if (
+			checkCoursePurchaseInfoResponse?.success &&
+			checkCoursePurchaseInfoResponse?.data
+		) {
+			navigate(`/course-progress/${currentCourseDetailsId}`);
+			return;
+		}
+
 		const response = await fetchStudentViewCourseDetailsService(
 			currentCourseDetailsId
 		);
@@ -51,6 +76,43 @@ function StudentViewCourseDetailsPage() {
 	function handleSetFreePreview(getCurrentVideoInfo) {
 		console.log(getCurrentVideoInfo);
 		setDisplayCurrentVideoFreePreview(getCurrentVideoInfo?.videoUrl);
+	}
+	async function handleCreatePayment() {
+		const paymentPayload = {
+			userId: auth?.user?._id,
+			userName: auth?.user?.userName,
+			userEmail: auth?.user?.userEmail,
+			orderStatus: "pending",
+			paymentMethod: "paypal",
+			paymentStatus: "initiated",
+			orderDate: new Date(),
+			paymentId: "",
+			payerId: "",
+			instructorId: studentViewCourseDetails?.instructorId,
+			instructorName: studentViewCourseDetails?.instructorName,
+			courseImage: studentViewCourseDetails?.image,
+			courseTitle: studentViewCourseDetails?.title,
+			courseId: studentViewCourseDetails?._id,
+			coursePricing: studentViewCourseDetails?.credit,
+		};
+
+		console.log(paymentPayload, "paymentPayload");
+		const response = await createPaymentService(paymentPayload);
+
+		if (response.success) {
+			sessionStorage.setItem(
+				"currentOrderId",
+				JSON.stringify(response?.data?.orderId)
+			);
+			setApprovalUrl(response?.data?.approveUrl);
+		}
+	}
+
+	{
+		/* //Directly navigate to student-courses without payment gateways
+	function navigateToStudentCourses() {
+		navigate("/student-courses");
+	} */
 	}
 
 	useEffect(() => {
@@ -71,6 +133,10 @@ function StudentViewCourseDetailsPage() {
 	}, [location.pathname]);
 
 	if (loadingState) return <Skeleton />;
+
+	if (approvalUrl !== "") {
+		window.location.href = approvalUrl;
+	}
 
 	// Find the label corresponding to the yearSemester id
 	const yearSemesterLabel = yearSemesters.find(
@@ -184,7 +250,17 @@ function StudentViewCourseDetailsPage() {
 									Course Credit:{studentViewCourseDetails?.credit}
 								</span>
 							</div>
-							<Button className="w-full">Enter To The Course</Button>
+							<Button
+								onClick={handleCreatePayment}
+								/* onClick={() =>
+									navigate(
+										`/course-progress/${studentViewCourseDetails?._id}`
+									)
+								} */
+								className="w-full"
+							>
+								Get Better View for ${studentViewCourseDetails?.credit}
+							</Button>
 						</CardContent>
 					</Card>
 				</aside>
